@@ -60,8 +60,6 @@ jobs:
           files: |
             dist/*.msi
             dist/*.exe
-            dist/**/*.msi
-            dist/**/*.exe
           name: ${{ github.event.inputs.release_name }}
           tag_name: ${{ github.run_id }}
           body: |
