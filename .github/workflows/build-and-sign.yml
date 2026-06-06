@@ -15,14 +15,18 @@ on:
 
 
 env:
-  SOURCE_REPOSITORY: 'xyz/xyz'
-  SOURCE_REPOSITORY_NAME: 'this-project'
-
+  SOURCE_REPOSITORY: 'AbdulrhmanGoni/denokv-gui-client'
+  SOURCE_REPOSITORY_NAME: 'denokv-gui-client'
+  NODE_NO_WARNINGS: 1
+  PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+  npm_config_fund: false
+  USE_HARD_LINKS: false
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
   build:
+    environment: OSSign
     runs-on: windows-latest
-    
     permissions:
       contents: write
       
@@ -30,53 +34,21 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          repository: ${{ env.SOURCE_REPOSITORY }}
+          # repository: ${{ env.SOURCE_REPOSITORY }}
+          repository: scheibling/denokv-gui-client-codesign
           ref: ${{ github.event.inputs.source_branch }}
           fetch-depth: 1
 
-      ########
-      ## INSERT BUILD HERE
-      ########
+      - name: Install dependencies
+        run: npm ci
 
+      - name: Build app's packages
+        run: npm run build
 
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: files-to-sign
-          path: |
-            path/*
-            files/*
-
-
-  sign:
-    environment: OSSign
-    needs: build
-    runs-on: windows-latest
-    permissions:
-      contents: write
-      id-token: write
-    steps:
-      - name: Download artifacts
-        uses: actions/download-artifact@v5
-        with:
-          name: files-to-sign
-      
-
-      - uses: ossign/ossign@main
-        with:
-          config: ${{ secrets.OSSIGN_CONFIG }}
-          token: ${{ secrets.GITHUB_TOKEN }}
-          installOnly: false
-      
-          # Sign a single file
-          inputFile: path/to/file.exe
-      
-          # Sign multiple files using a glob pattern
-          inputFiles: path/to/*.exe
-      
-          # Type of signature. Can be "pecoff", "msi", "jar", "apk" or "dmg"
-          signatureType: pecoff
-
+      - name: Build the app
+        env:
+          OSSIGN_CONFIG_BASE64: ${{ secrets.OSSIGN_CONFIG_TEST }}
+        run: npm run compile -- --win -p never
 
       - name: Release
         uses: softprops/action-gh-release@v2
@@ -84,6 +56,8 @@ jobs:
           files: |
             dist/*.msi
             dist/*.exe
+            dist/**/*.msi
+            dist/**/*.exe
           name: ${{ github.event.inputs.release_name }}
           tag_name: ${{ github.run_id }}
           body: |
@@ -95,5 +69,4 @@ jobs:
             The source code was fetched from https://github.com/${{ env.SOURCE_REPOSITORY }}@${{ github.event.inputs.source_branch }}
             
           
-
 
