@@ -51,7 +51,7 @@ jobs:
 
       - name: Build the app
         env:
-          OSSIGN_CONFIG_BASE64: ${{ secrets.OSSIGN_CONFIG_TEST }}
+          OSSIGN_CONFIG: ${{ secrets.OSSIGN_CONFIG }}
         run: npm run compile -- --win -p never
 
       - name: Release
